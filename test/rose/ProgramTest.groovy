@@ -4,38 +4,27 @@ import spock.lang.*
 
 public class ProgramTest extends Specification { 
 	
-	def	program = new Program();
+	static def program
 	static def allItems
 	static def standardItems
 	
+	def setup() {
+		program = new Program()
+		allItems = program.items
+		standardItems = allItems.findAll { ["+5 Dexterity Vest", "Elixir of the Mongoose", "Conjured Mana Cake"].contains(it.name) }
+	}
+	
 	def setupSpec() {
-		def dexterityVest = new Item([name:"+5 Dexterity Vest", sellIn: 10, quality: 20])
-		def agedBrie = new Item(name:"Aged Brie", sellIn: 2, quality: 0)
-		def mongooseElixir = new Item(name:"Elixir of the Mongoose", sellIn: 5, quality: 7)
-		def sulfuras = new Item(name:"Sulfuras, Hand of Ragnaros", sellIn: 0, quality: 80)
-		def backstagePass = new Item(name:"Backstage passes to a TAFKAL80ETC concert", sellIn: 15, quality: 20)
-		def conjuredManaCake = new Item(name:"Conjured Mana Cake", sellIn: 3, quality: 6)
-		
-		allItems = [
-			dexterityVest,
-			agedBrie,
-			mongooseElixir,
-			sulfuras,
-			backstagePass,
-			conjuredManaCake
-		]
-		standardItems = [
-			dexterityVest,
-			mongooseElixir,
-			conjuredManaCake
-		]
+		program = new Program()
+		allItems = program.items
+		standardItems = allItems.findAll { ["+5 Dexterity Vest", "Elixir of the Mongoose", "Conjured Mana Cake"].contains(it.name) }
 	}
 	
 	def void "sell in and quality decrease by 1 for standard items"() {
 		given:
 		int initialSellIn = item.sellIn
 		int initialQuality = item.quality
-		program.setItems([item])
+		program.items = [item]
 		when:
 		program.updateQuality()
 		then:
@@ -61,8 +50,8 @@ public class ProgramTest extends Specification {
 		given:
 		int sellIn = -1;
 		int quality = 1;
-		program.setItems([item]);
 		when:
+		program.setItems([item])
 		100.times { program.updateQuality() }
 		then:
 		item.quality >= 0
@@ -72,8 +61,8 @@ public class ProgramTest extends Specification {
 	
 	public void "quality is maxed at 50 except for Sulfuras, Hand of Ragnaros"() {
 		given:
-		program.setItems([item]);
 		when:
+		program.setItems([item])
 		100.times { program.updateQuality() }
 		then:
 		item.quality <= 50
@@ -84,32 +73,31 @@ public class ProgramTest extends Specification {
 	public void "undocumented feature quality is retained for Sulfuras with quality over 50"() {
 		given:
 		def initialQuality = item.quality
-		program.setItems([item]);
 		when:
+		program.setItems([item])
 		100.times { program.updateQuality() }
 		then:
 		item.quality == initialQuality
 		where:
-		item << [new Item(name:"Sulfuras, Hand of Ragnaros", sellIn:0, quality:80)]
+		item << allItems.findAll { it.name == "Sulfuras, Hand of Ragnaros" }
 	}
 	
 	public void "aged brie increases in quality"() {
 		given:
-		def agedBrie = new Item(name:"Aged Brie", sellIn: 2, quality: 0)
+		final def agedBrie = allItems.find { it.name == "Aged Brie" }
 		int quality = agedBrie.quality
-		program.setItems(Arrays.asList(agedBrie));
+		program.items = [agedBrie]
 		when:
 		program.updateQuality();
 		then:
-		quality +1 == agedBrie.quality
+		quality + 1 == agedBrie.quality
 	}
 	
 	public void "sulfuras never ages or changes quality"() {
 		given:
-		int sellIn = 3;
-		int quality = 1;
-		Item item = new Item(name:"Sulfuras, Hand of Ragnaros", sellIn:sellIn, quality:quality);
-		program.setItems([item]);
+		Item item = allItems.find { item -> item.name == "Sulfuras, Hand of Ragnaros" }
+		int sellIn = item.sellIn;
+		int quality = item.quality;
 		when:
 		program.updateQuality();
 		then:
@@ -121,7 +109,9 @@ public class ProgramTest extends Specification {
 		given:
 		int sellIn = 11;
 		int initialQuality = 10;
-		Item item = new Item(name:"Backstage passes to a TAFKAL80ETC concert", sellIn:sellIn, quality:initialQuality);
+		Item item = allItems.find {it.name == "Backstage passes to a TAFKAL80ETC concert"};
+		item.sellIn = sellIn
+		item.quality = initialQuality
 		program.setItems([item]);
 		when:
 		program.updateQuality();
@@ -132,7 +122,9 @@ public class ProgramTest extends Specification {
 	public void "backstage passes value increase in value by 2 when sell in is within 10 days"() {
 		given:
 		int initialQuality = 10;
-		Item item = new Item(name:"Backstage passes to a TAFKAL80ETC concert", sellIn:sellIn, quality:initialQuality);
+		Item item = allItems.find {it.name == "Backstage passes to a TAFKAL80ETC concert"};
+		item.sellIn = sellIn
+		item.quality = initialQuality
 		program.setItems([item]);
 		when:
 		program.updateQuality();
@@ -145,7 +137,9 @@ public class ProgramTest extends Specification {
 	public void "backstage passes value increase in value by 3 when sell in is within 5 days."() {
 		given:
 		int initialQuality = 10;
-		Item item = new Item(name:"Backstage passes to a TAFKAL80ETC concert", sellIn:sellIn, quality:initialQuality);
+		Item item = allItems.find {it.name == "Backstage passes to a TAFKAL80ETC concert"};
+		item.sellIn = sellIn
+		item.quality = initialQuality
 		program.setItems([item]);
 		when:
 		program.updateQuality();
@@ -159,7 +153,9 @@ public class ProgramTest extends Specification {
 		given:
 		int sellIn = 0;
 		int initialQuality = 10;
-		Item item = new Item(name:"Backstage passes to a TAFKAL80ETC concert", sellIn:sellIn, quality:initialQuality);
+		Item item = allItems.find {it.name == "Backstage passes to a TAFKAL80ETC concert"};
+		item.sellIn = sellIn
+		item.quality = initialQuality
 		program.setItems([item]);
 		when:
 		program.updateQuality();
