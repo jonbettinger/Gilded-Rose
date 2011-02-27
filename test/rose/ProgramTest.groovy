@@ -4,21 +4,9 @@ import spock.lang.*
 
 public class ProgramTest extends Specification { 
 	
-	static def program
-	static def allItems
-	static def standardItems
-	
-	def setup() {
-		program = new Program()
-		allItems = program.items
-		standardItems = allItems.findAll { ["+5 Dexterity Vest", "Elixir of the Mongoose", "Conjured Mana Cake"].contains(it.name) }
-	}
-	
-	def setupSpec() {
-		program = new Program()
-		allItems = program.items
-		standardItems = allItems.findAll { ["+5 Dexterity Vest", "Elixir of the Mongoose", "Conjured Mana Cake"].contains(it.name) }
-	}
+	static def program = new Program()
+	static def allItems = program.items
+	static def standardItems = allItems.findAll { ["+5 Dexterity Vest", "Elixir of the Mongoose", "Conjured Mana Cake"].contains(it.name) }
 	
 	def void "sell in and quality decrease by 1 for standard items"() {
 		given:
@@ -82,15 +70,28 @@ public class ProgramTest extends Specification {
 		item << allItems.findAll { it.name == "Sulfuras, Hand of Ragnaros" }
 	}
 	
-	public void "aged brie increases in quality"() {
+	public void "aged brie increases in quality by one before sellin"() {
 		given:
 		final def agedBrie = allItems.find { it.name == "Aged Brie" }
-		int quality = agedBrie.quality
+		agedBrie.sellIn = 10
+		int quality = agedBrie.quality = 25
 		program.items = [agedBrie]
 		when:
 		program.updateQuality();
 		then:
 		quality + 1 == agedBrie.quality
+	}
+	
+	public void "aged brie increases in quality by two after sellin"() {
+		given:
+		final def agedBrie = allItems.find { it.name == "Aged Brie" }
+		agedBrie.sellIn = 0
+		int quality = agedBrie.quality = 25
+		program.items = [agedBrie]
+		when:
+		program.updateQuality();
+		then:
+		quality + 2 == agedBrie.quality
 	}
 	
 	public void "sulfuras never ages or changes quality"() {

@@ -1,56 +1,67 @@
 package rose
 
-class Program {
+import groovy.lang.ExpandoMetaClass;
+
+public class Program {
+	public Program() {
+		assignUpdateLogic "+5 Dexterity Vest", standardUpdateLogic
+		assignUpdateLogic "Aged Brie", agedBrieUpdateLogic
+		assignUpdateLogic "Elixir of the Mongoose", standardUpdateLogic
+		assignUpdateLogic "Sulfuras, Hand of Ragnaros", sulfurasUpdateLogic
+		assignUpdateLogic "Backstage passes to a TAFKAL80ETC concert", backstagePassUpdateLogic
+		assignUpdateLogic "Conjured Mana Cake", standardUpdateLogic
+	}
+	
+	private def standardUpdateLogic = {->
+		if (quality > 0) {
+			quality--
+		}
+		sellIn--
+		if (sellIn < 0 && quality > 0) {
+			quality--
+		}
+	}
+	
+	private def agedBrieUpdateLogic = {->
+		if (quality < 50) {
+			quality++
+		}
+		sellIn--
+		if (sellIn < 0 && quality < 50) {
+			quality++
+		}
+	}
+	
+	private def sulfurasUpdateLogic = {-> 
+		sellIn-- 
+	}
+	
+	private def backstagePassUpdateLogic = {->
+		if (quality < 50) {
+			quality++
+			if (sellIn < 11 && quality < 50) {
+				quality++
+			}
+			if (sellIn < 6 && quality < 50) {
+				quality++
+			}
+		}
+		sellIn--
+		if (sellIn < 0) {
+			quality = 0
+		}
+	}
+	
+	private def assignUpdateLogic(name, updateClosure) {
+		def metaClass = new ExpandoMetaClass(Item)
+		metaClass.updateItemQuality = updateClosure
+		metaClass.initialize()
+		items.find { item -> item.name == name }.metaClass = metaClass
+	}
 	
 	void updateQuality() {
-		for (def i = 0; i < items.size(); i++) {
-			if (items[i].name == "Aged Brie") {
-				if (items[i].quality < 50) {
-					items[i].quality = items[i].quality + 1;
-				}
-			} else if (items[i].name == "Backstage passes to a TAFKAL80ETC concert") {
-				if (items[i].quality < 50) {
-					items[i].quality = items[i].quality + 1;
-					
-					if (items[i].sellIn < 11) {
-						if (items[i].quality < 50) {
-							items[i].quality = items[i].quality + 1;
-						}
-					}
-					
-					if (items[i].sellIn < 6) {
-						if (items[i].quality < 50) {
-							items[i].quality = items[i].quality + 1;
-						}
-					}
-				}
-			} else if (items[i].name != "Sulfuras, Hand of Ragnaros") {
-				if (items[i].quality > 0) {
-					items[i].quality = items[i].quality - 1;
-				}
-			}
-			
-			if (items[i].name != "Sulfuras, Hand of Ragnaros") {
-				items[i].sellIn = items[i].sellIn - 1;
-			}
-			
-			if (items[i].name == "Aged Brie") {
-				if (items[i].sellIn < 0) {
-					if (items[i].quality < 50) {
-						items[i].quality = items[i].quality + 1;
-					}
-				}
-			} else if (items[i].name == "Backstage passes to a TAFKAL80ETC concert") {
-				if (items[i].sellIn < 0) {
-					items[i].quality = items[i].quality - items[i].quality;
-				}
-			} else if (items[i].name != "Sulfuras, Hand of Ragnaros") {
-				if (items[i].sellIn < 0) {
-					if (items[i].quality > 0) {
-						items[i].quality = items[i].quality - 1;
-					}
-				}
-			}
+		items.each { item ->
+			item.updateItemQuality()
 		}
 	}
 	
@@ -61,17 +72,15 @@ class Program {
 		new Item ( name: "Sulfuras, Hand of Ragnaros", sellIn: 0, quality: 80 ),
 		new Item ( name: "Backstage passes to a TAFKAL80ETC concert", sellIn: 15, quality: 20 ),
 		new Item ( name: "Conjured Mana Cake", sellIn: 3, quality: 6 )
-	];
+	]
 }
 
 class Item {
 	String name
-	
 	int sellIn
-	
 	int quality
 	
 	String toString() {
-		"Item: ${name}, sell in ${sellIn}, quality ${quality}"
+		"Item name: ${name},sellIn: ${sellIn},quality: ${quality}"
 	}
 }
